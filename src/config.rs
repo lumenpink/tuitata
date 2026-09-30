@@ -3,12 +3,16 @@ use std::path::PathBuf;
 
 pub const DEFAULT_FLASH_MODEL: &str = "gemini-3.8-flash";
 pub const DEFAULT_PRO_MODEL: &str = "gemini-3.1-pro-preview";
+pub const DEFAULT_OLLAMA_MODEL: &str = "qwen2.5-coder:3b";
+pub const DEFAULT_OLLAMA_URL: &str = "http://localhost:11434";
 
 #[derive(Clone, Debug)]
 pub struct Config {
     pub api_key: String,
     pub flash_model: String,
     pub pro_model: String,
+    pub ollama_model: String,
+    pub ollama_url: String,
     pub obsidian_vault: PathBuf,
 }
 
@@ -21,10 +25,15 @@ impl Config {
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/lumen"));
         let obsidian_vault = home.join("obsidian");
 
+        let ollama_model = std::env::var("OLLAMA_MODEL").unwrap_or_else(|_| DEFAULT_OLLAMA_MODEL.to_string());
+        let ollama_url = std::env::var("OLLAMA_URL").unwrap_or_else(|_| DEFAULT_OLLAMA_URL.to_string());
+
         Ok(Self {
             api_key,
             flash_model: DEFAULT_FLASH_MODEL.to_string(),
             pro_model: DEFAULT_PRO_MODEL.to_string(),
+            ollama_model,
+            ollama_url,
             obsidian_vault,
         })
     }

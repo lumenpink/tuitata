@@ -2,6 +2,7 @@ mod app;
 mod config;
 mod context;
 mod gemini;
+mod ollama;
 mod ui;
 
 use app::App;
@@ -13,6 +14,7 @@ use crossterm::{
 };
 use futures::StreamExt;
 use gemini::GeminiClient;
+use ollama::OllamaClient;
 use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io::{self, stdout};
 use tokio::sync::mpsc;
@@ -29,11 +31,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
-    let client = GeminiClient::new(config.api_key.clone());
-
-    // Se argumentos foram passados diretamente no terminal (modo CLI pontual: `tt "dúvida"` ou `tt @arquivo "pergunta"`)
+    // Se argumentos foram passados diretamente no terminal (modo CLI pontual: `tt "dúvida"` ou `tt --ollama "dúvida"`)
     if !args.is_empty() {
-        let raw_prompt = args.join(" ");
+        let (use_ollama, clean_args): (bool, Vec<String>) = if args.iter().any(|a| a == "--ollama" || a == "-o") {
+            (true, args.into_iter().filter(|a| a != "--ollama" && a != "-o").collect())
+        } else {
+            (false, args)
+        };
+
+        let raw_prompt = clean_args.join(" ");
         let (prompt, _) = match context::process_input_files(&raw_prompt) {
             Ok(res) => res,
             Err(e) => {
@@ -49,11 +55,23 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         }];
 
         let (tx, mut rx) = mpsc::unbounded_channel::<String>();
-        let model = config.flash_model.clone();
+        let client_gemini = GeminiClient::new(config.api_key.clone());
+        let client_ollama = OllamaClient::new(Some(config.ollama_url.clone()));
+        let model = if use_ollama {
+            config.ollama_model.clone()
+        } else {
+            config.flash_model.clone()
+        };
 
         tokio::spawn(async move {
-            if let Err(e) = client.stream_chat(&messages, &model, tx).await {
-                eprintln!("\n[Tuitatá Erro] {}", e);
+            if use_ollama {
+                if let Err(e) = client_ollama.stream_chat(&messages, &model, tx).await {
+                    eprintln!("\n[Tuitatá Erro Ollama] {}", e);
+                }
+            } else {
+                if let Err(e) = client_gemini.stream_chat(&messages, &model, tx).await {
+                    eprintln!("\n[Tuitatá Erro Gemini] {}", e);
+                }
             }
         });
 
@@ -156,6 +174,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 app.clear_input();
                                 continue;
                             }
+                            if text.starts_with("/model ") || text.starts_with("/m ") {
+                                let name = if text.starts_with("/model ") {
+                                    text.trim_start_matches("/model ").trim()
+                                } else {
+                                    text.trim_start_matches("/m ").trim()
+                                };
+                                app.set_model_by_name(name);
+                                app.clear_input();
+                                continue;
+                            }
                             if text == "/top" || text == "/inicio" {
                                 app.scroll_to_top();
                                 app.clear_input();
@@ -198,13 +226,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             app.clear_input();
                             app.is_generating = true;
 
-                            let client_clone = GeminiClient::new(app.config.api_key.clone());
+                            let client_gemini = GeminiClient::new(app.config.api_key.clone());
+                            let client_ollama = OllamaClient::new(Some(app.config.ollama_url.clone()));
                             let messages_snapshot = app.messages.clone();
                             let model_name = app.current_model.clone();
+                            let is_ollama = model_name == app.config.ollama_model
+                                || model_name.contains("qwen")
+                                || model_name.contains("ollama");
                             let tx = chunk_tx.clone();
 
                             tokio::spawn(async move {
-                                let _ = client_clone.stream_chat(&messages_snapshot, &model_name, tx).await;
+                                if is_ollama {
+                                    if let Err(e) = client_ollama.stream_chat(&messages_snapshot, &model_name, tx.clone()).await {
+                                        let _ = tx.send(format!("\n[Tuitatá Erro Ollama] {}", e));
+                                    }
+                                } else {
+                                    if let Err(e) = client_gemini.stream_chat(&messages_snapshot, &model_name, tx.clone()).await {
+                                        let _ = tx.send(format!("\n[Tuitatá Erro Gemini] {}", e));
+                                    }
+                                }
                             });
                         }
                         continue;

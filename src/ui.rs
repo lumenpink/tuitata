@@ -25,7 +25,12 @@ pub fn render(f: &mut Frame, app: &App) {
 }
 
 fn render_header(f: &mut Frame, app: &App, area: Rect) {
-    let model_badge = if app.current_model.contains("pro") {
+    let model_badge = if app.current_model == app.config.ollama_model || app.current_model.contains("qwen") || app.current_model.contains("ollama") {
+        Span::styled(
+            format!(" [🦙 Ollama: {}] ", app.config.ollama_model),
+            Style::default().fg(Color::Rgb(100, 255, 100)).add_modifier(Modifier::BOLD),
+        )
+    } else if app.current_model.contains("pro") {
         Span::styled(
             " [🧠 Gemini Pro] ",
             Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),

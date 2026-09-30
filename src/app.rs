@@ -86,6 +86,23 @@ impl App {
         if self.current_model == self.config.flash_model {
             self.current_model = self.config.pro_model.clone();
             self.set_status("Alternado para modelo: 🧠 Gemini Pro (Raciocínio Profundo)");
+        } else if self.current_model == self.config.pro_model {
+            self.current_model = self.config.ollama_model.clone();
+            self.set_status(&format!("Alternado para modelo: 🦙 Ollama Local ({})", self.config.ollama_model));
+        } else {
+            self.current_model = self.config.flash_model.clone();
+            self.set_status("Alternado para modelo: ⚡ Gemini Flash (Ultrarrápido)");
+        }
+    }
+
+    pub fn set_model_by_name(&mut self, target: &str) {
+        let t = target.to_lowercase();
+        if t.contains("ollama") || t.contains("local") || t.contains("qwen") {
+            self.current_model = self.config.ollama_model.clone();
+            self.set_status(&format!("Alternado para modelo: 🦙 Ollama Local ({})", self.config.ollama_model));
+        } else if t.contains("pro") {
+            self.current_model = self.config.pro_model.clone();
+            self.set_status("Alternado para modelo: 🧠 Gemini Pro (Raciocínio Profundo)");
         } else {
             self.current_model = self.config.flash_model.clone();
             self.set_status("Alternado para modelo: ⚡ Gemini Flash (Ultrarrápido)");
