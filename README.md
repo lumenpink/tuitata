@@ -51,11 +51,14 @@ tuitata
 | `<Ctrl + P>` / `<Tab>` | Alterna entre os modelos de IA (ou digite `/model` / `/m`) |
 | `<Ctrl + S>` | Exporta a conversa para `~/obsidian/01_inbox/` em Markdown |
 | `<Alt + Y>` | Copia o último bloco de código gerado para o clipboard |
+| `<Ctrl + W>` | Grava o arquivo proposto pela IA diretamente no disco |
 | `<Ctrl + U>` / `<Ctrl + D>` | Rola meia página para cima ou para baixo (ideal para tablets) |
 | `<Ctrl + K>` / `<Ctrl + J>` | Rola uma linha para cima ou para baixo (`Alt+↑` / `Alt+↓`) |
 | `PageUp / PageDown` | Rola blocos do histórico da conversa |
 | `/top` ou `/inicio` | Digite no prompt para saltar imediatamente ao início da conversa |
 | `/bottom` ou `/fim` | Digite no prompt para saltar imediatamente ao final da conversa |
+| `/apply` ou `/write` | Aplica/grava o arquivo sugerido pela IA no disco |
+| `/save <caminho>` | Grava o último bloco de código no caminho especificado |
 | `Esc` ou `Ctrl + C` | Encerra o Tuitatá |
 
 ### 3. Análise e Interação com Arquivos Locais
@@ -70,7 +73,13 @@ Você pode referenciar arquivos locais diretamente no prompt de duas formas:
   ```
 O Tuitatá detecta a sintaxe do arquivo, valida o tamanho (até 500 KB) e injeta o bloco de código formatado automaticamente no prompt para a IA.
 
-### 4. Modo Pergunta Rápida no Terminal (CLI)
+### 4. Gravação de Arquivos no Disco (Estilo Antigravity / Copilot)
+Quando o modelo propõe a criação ou modificação de arquivos de código:
+- Pressione `<Ctrl + W>` ou digite `/apply` (ou `/write`) para persistir diretamente o arquivo proposto pela IA no caminho correto.
+- Ou use `/save <caminho>` para direcionar o conteúdo para um local customizado.
+- O Tuitatá cria automaticamente diretórios intermediários necessários e emite confirmação de gravação na barra de status.
+
+### 5. Modo Pergunta Rápida no Terminal (CLI)
 Você também pode disparar perguntas pontuais diretamente com suporte a arquivos sem abrir a TUI:
 ```bash
 tt "explique o que é a lei de Amdahl em 3 linhas"
