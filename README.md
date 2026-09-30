@@ -53,11 +53,14 @@ tuitata
 | `<Ctrl + S>` | Exporta a conversa para `~/obsidian/01_inbox/` em Markdown |
 | `<Alt + Y>` | Copia o último bloco de código gerado para o clipboard |
 | `<Ctrl + W>` | Grava o arquivo proposto pela IA diretamente no disco |
+| `<Ctrl + F>` | Inicia busca textual no histórico ou salta para a próxima ocorrência |
 | `<Ctrl + U>` / `<Ctrl + D>` | Rola meia página para cima ou para baixo (ideal para tablets) |
 | `<Ctrl + K>` / `<Ctrl + J>` | Rola uma linha para cima ou para baixo (`Alt+↑` / `Alt+↓`) |
 | `PageUp / PageDown` | Rola blocos do histórico da conversa |
 | `/top` ou `/inicio` | Digite no prompt para saltar imediatamente ao início da conversa |
 | `/bottom` ou `/fim` | Digite no prompt para saltar imediatamente ao final da conversa |
+| `/find <termo>` ou `/<termo>` | Busca termo no histórico com destaque colorido e salto imediato |
+| `/clear_find` | Remove o realce e encerra o filtro de busca |
 | `/apply` ou `/write` | Aplica/grava o arquivo sugerido pela IA no disco |
 | `/save <caminho>` | Grava o último bloco de código no caminho especificado |
 | `Esc` ou `Ctrl + C` | Encerra o Tuitatá |
