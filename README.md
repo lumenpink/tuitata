@@ -46,6 +46,8 @@ tuitata
 | Tecla | Ação |
 | :--- | :--- |
 | `Enter` | Envia a mensagem para o Gemini |
+| `← / →` | Move o cursor na barra de entrada de texto (com rolagem horizontal automática) |
+| `Backspace / Del` | Apaga caractere anterior ou posterior ao cursor |
 | `<F2>` | Alterna entre **Gemini Flash** e **Gemini Pro** |
 | `<Ctrl + S>` | Exporta a conversa para `~/obsidian/01_inbox/` em Markdown |
 | `<Alt + Y>` | Copia o último bloco de código gerado para o clipboard |
