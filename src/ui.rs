@@ -41,7 +41,7 @@ fn render_header(f: &mut Frame, app: &App, area: Rect) {
         Span::styled(" 🔥 TUITATÁ ", Style::default().fg(Color::LightRed).add_modifier(Modifier::BOLD)),
         Span::styled("(`tt`)", Style::default().fg(Color::DarkGray)),
         model_badge,
-        Span::styled(" │ <F2> Modelo │ <Ctrl+S> Salvar Obsidian │ <Alt+Y> Copiar Código │ <Esc> Sair", Style::default().fg(Color::Gray)),
+        Span::styled(" │ <Ctrl+P/Tab> Modelo │ <Ctrl+S> Salvar │ <Alt+Y> Copiar Código │ <Esc> Sair", Style::default().fg(Color::Gray)),
     ]);
 
     let block = Block::default()

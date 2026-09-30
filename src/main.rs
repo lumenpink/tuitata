@@ -84,8 +84,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         break;
                     }
 
-                    // F2: Alternar entre Flash e Pro
-                    if key.code == KeyCode::F(2) {
+                    // Alternar modelo: Ctrl+P, Tab (quando input vazio) ou F2 (legado)
+                    if (key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('p'))
+                        || (key.code == KeyCode::Tab && app.input.is_empty())
+                        || key.code == KeyCode::F(2)
+                    {
                         app.toggle_model();
                         continue;
                     }
@@ -117,6 +120,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if key.code == KeyCode::Enter && !app.is_generating {
                         let text = app.input.trim().to_string();
                         if !text.is_empty() {
+                            if text == "/model" || text == "/m" {
+                                app.toggle_model();
+                                app.clear_input();
+                                continue;
+                            }
+
                             app.add_user_message(text);
                             app.clear_input();
                             app.is_generating = true;
