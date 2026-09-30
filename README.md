@@ -54,7 +54,7 @@ tuitata
 | `<Alt + Y>` | Copia o último bloco de código gerado para o clipboard |
 | `<Ctrl + W>` | Grava o arquivo proposto pela IA diretamente no disco |
 | `<Ctrl + F>` | Inicia busca textual no histórico ou salta para a próxima ocorrência |
-| `<Ctrl + U>` / `<Ctrl + D>` | Rola meia página para cima ou para baixo (ideal para tablets) |
+| `<Ctrl + U>` / `<Ctrl + D>` | Rola meia página para cima ou para baixo (pausa o autoscroll durante streaming) |
 | `<Ctrl + K>` / `<Ctrl + J>` | Rola uma linha para cima ou para baixo (`Alt+↑` / `Alt+↓`) |
 | `PageUp / PageDown` | Rola blocos do histórico da conversa |
 | `/top` ou `/inicio` | Digite no prompt para saltar imediatamente ao início da conversa |
