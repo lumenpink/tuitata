@@ -19,6 +19,7 @@ pub struct App {
     pub search_query: Option<String>,
     pub search_matches: Vec<usize>,
     pub current_search_idx: usize,
+    pub pending_image: Option<crate::gemini::ImageAttachment>,
 }
 
 impl App {
@@ -38,6 +39,7 @@ impl App {
             search_query: None,
             search_matches: Vec::new(),
             current_search_idx: 0,
+            pending_image: None,
         }
     }
 
@@ -117,15 +119,39 @@ impl App {
         }
     }
 
-    pub fn add_user_message(&mut self, content: String) {
+    pub fn add_user_message(&mut self, content: String, attachment: Option<crate::gemini::ImageAttachment>) {
         let now = Local::now().format("%H:%M").to_string();
         self.messages.push(ChatMessage {
             role: "user".to_string(),
             content,
             timestamp: now,
+            attachment,
         });
         self.auto_scroll = true;
         self.scroll_to_bottom();
+    }
+
+    pub fn attach_image_file(&mut self, path: &str) -> Result<(), String> {
+        let att = crate::media::load_image_from_file(path)?;
+        let name = att.filename.clone();
+        self.pending_image = Some(att);
+        self.set_status(&format!("Imagem anexada: 📎 {}", name));
+        Ok(())
+    }
+
+    pub fn attach_clipboard_image(&mut self) -> Result<(), String> {
+        let att = crate::media::load_image_from_clipboard()?;
+        let name = att.filename.clone();
+        self.pending_image = Some(att);
+        self.set_status(&format!("Imagem colada da área de transferência: 📎 {}", name));
+        Ok(())
+    }
+
+    pub fn clear_pending_image(&mut self) {
+        if self.pending_image.is_some() {
+            self.pending_image = None;
+            self.set_status("Anexo de imagem removido.");
+        }
     }
 
     pub fn append_to_last_model_message(&mut self, text: &str) {
@@ -143,6 +169,7 @@ impl App {
             role: "model".to_string(),
             content: text.to_string(),
             timestamp: now,
+            attachment: None,
         });
         if self.auto_scroll {
             self.scroll_to_bottom();
@@ -302,7 +329,12 @@ impl App {
 
         for m in &self.messages {
             let role_label = if m.role == "user" { "👤 **Você**" } else { "🔥 **Tuitatá**" };
-            doc.push_str(&format!("### {} ({})\n\n{}\n\n---\n\n", role_label, m.timestamp, m.content));
+            let att_str = if let Some(att) = &m.attachment {
+                format!("\n> 📎 *Imagem anexada:* `{}`\n\n", att.filename)
+            } else {
+                String::new()
+            };
+            doc.push_str(&format!("### {} ({})\n\n{}{}\n\n---\n\n", role_label, m.timestamp, att_str, m.content));
         }
 
         fs::write(&target_path, doc).map_err(|e| format!("Falha ao salvar no Obsidian: {}", e))?;

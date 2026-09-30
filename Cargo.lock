@@ -961,6 +961,8 @@ dependencies = [
  "num-traits",
  "png",
  "tiff",
+ "zune-core",
+ "zune-jpeg",
 ]
 
 [[package]]
@@ -2048,14 +2050,16 @@ checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
 
 [[package]]
 name = "tuitata"
-version = "0.1.0-dev.1"
+version = "0.2.0-dev.1"
 dependencies = [
  "arboard",
+ "base64 0.22.1",
  "chrono",
  "clap",
  "crossterm",
  "dirs",
  "futures",
+ "image",
  "ratatui",
  "reqwest",
  "serde",

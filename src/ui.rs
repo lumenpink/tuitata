@@ -46,7 +46,7 @@ fn render_header(f: &mut Frame, app: &App, area: Rect) {
         Span::styled(" 🔥 TUITATÁ ", Style::default().fg(Color::LightRed).add_modifier(Modifier::BOLD)),
         Span::styled("(`tt`)", Style::default().fg(Color::DarkGray)),
         model_badge,
-        Span::styled(" │ <Ctrl+P/Tab> Modelo │ <Ctrl+S> Salvar │ <Alt+Y> Copiar Código │ <Esc> Sair", Style::default().fg(Color::Gray)),
+        Span::styled(" │ <Ctrl+P/Tab> Modelo │ <Ctrl+V> Colar Imagem │ /imagine <prompt> │ <Ctrl+S> Salvar │ <Esc> Sair", Style::default().fg(Color::Gray)),
     ]);
 
     let block = Block::default()
@@ -135,6 +135,14 @@ fn render_chat(f: &mut Frame, app: &App, area: Rect) {
             Span::styled(prefix, Style::default().fg(color).add_modifier(Modifier::BOLD)),
         ]));
 
+        if let Some(att) = &msg.attachment {
+            lines.push(Line::from(vec![
+                Span::styled("  📎 [Imagem: ", Style::default().fg(Color::Rgb(150, 255, 150))),
+                Span::styled(&att.filename, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+                Span::styled(format!(" ({})]", att.mime_type), Style::default().fg(Color::DarkGray)),
+            ]));
+        }
+
         let mut in_code_block = false;
         let query = app.search_query.as_deref();
         for line_str in msg.content.lines() {
@@ -200,9 +208,11 @@ fn render_input(f: &mut Frame, app: &App, area: Rect) {
     };
 
     let title = if app.is_generating {
-        " ⏳ Tuitatá gerando resposta... "
+        " ⏳ Tuitatá gerando resposta... ".to_string()
+    } else if let Some(att) = &app.pending_image {
+        format!(" Pergunta 📎 [Anexada: {}] (Ctrl+X remove) ", att.filename)
     } else {
-        " Pergunta (Enter envia) "
+        " Pergunta (Enter envia) ".to_string()
     };
 
     let block = Block::default()

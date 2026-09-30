@@ -10,6 +10,8 @@ use tokio::sync::mpsc::UnboundedSender;
 struct OllamaMessage<'a> {
     role: &'a str,
     content: &'a str,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    images: Vec<&'a str>,
 }
 
 #[derive(Serialize)]
@@ -49,12 +51,20 @@ impl OllamaClient {
         req_messages.push(OllamaMessage {
             role: "system",
             content: sys_prompt,
+            images: Vec::new(),
         });
 
         for m in messages {
+            let images = if let Some(att) = &m.attachment {
+                vec![att.data_base64.as_str()]
+            } else {
+                Vec::new()
+            };
+
             req_messages.push(OllamaMessage {
                 role: if m.role == "user" { "user" } else { "assistant" },
                 content: &m.content,
+                images,
             });
         }
 

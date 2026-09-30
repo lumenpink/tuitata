@@ -6,15 +6,38 @@ use std::time::Duration;
 use tokio::sync::mpsc::UnboundedSender;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ImageAttachment {
+    pub filename: String,
+    pub mime_type: String,
+    pub data_base64: String,
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct ChatMessage {
     pub role: String, // "user" ou "model"
     pub content: String,
     pub timestamp: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub attachment: Option<ImageAttachment>,
 }
 
 #[derive(Serialize)]
-struct GeminiPart<'a> {
-    text: &'a str,
+struct InlineData<'a> {
+    #[serde(rename = "mimeType")]
+    mime_type: &'a str,
+    data: &'a str,
+}
+
+#[derive(Serialize)]
+#[serde(untagged)]
+enum GeminiPart<'a> {
+    Text {
+        text: &'a str,
+    },
+    Inline {
+        #[serde(rename = "inlineData")]
+        inline_data: InlineData<'a>,
+    },
 }
 
 #[derive(Serialize)]
@@ -63,16 +86,27 @@ impl GeminiClient {
 
         let contents: Vec<GeminiContent> = messages
             .iter()
-            .map(|m| GeminiContent {
-                role: if m.role == "user" { "user" } else { "model" },
-                parts: vec![GeminiPart { text: &m.content }],
+            .map(|m| {
+                let mut parts = vec![GeminiPart::Text { text: &m.content }];
+                if let Some(att) = &m.attachment {
+                    parts.push(GeminiPart::Inline {
+                        inline_data: InlineData {
+                            mime_type: &att.mime_type,
+                            data: &att.data_base64,
+                        },
+                    });
+                }
+                GeminiContent {
+                    role: if m.role == "user" { "user" } else { "model" },
+                    parts,
+                }
             })
             .collect();
 
         let sys_prompt = "Você é o Tuitatá, um assistente técnico de alta precisão integrado ao ambiente de terminal Linux. Quando sugerir código ou criar/modificar arquivos, especifique o caminho do arquivo no identificador do bloco markdown como ```file:caminho/do/arquivo.ext ou ```linguagem:caminho/do/arquivo.ext, permitindo que o usuário grave diretamente no disco.";
         let payload = GeminiRequest {
             system_instruction: Some(GeminiSystemInstruction {
-                parts: vec![GeminiPart { text: sys_prompt }],
+                parts: vec![GeminiPart::Text { text: sys_prompt }],
             }),
             contents,
         };
@@ -123,5 +157,63 @@ impl GeminiClient {
         }
 
         Ok(())
+    }
+
+    pub async fn generate_image(&self, prompt: &str) -> Result<(String, Vec<u8>), String> {
+        let url = format!(
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key={}",
+            self.api_key
+        );
+
+        let payload = serde_json::json!({
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }]
+        });
+
+        let resp = self
+            .client
+            .post(&url)
+            .header("Content-Type", "application/json")
+            .json(&payload)
+            .send()
+            .await
+            .map_err(|e| format!("Falha ao conectar com endpoint de imagem: {}", e))?;
+
+        if !resp.status().is_success() {
+            let status = resp.status();
+            let err_text = resp.text().await.unwrap_or_default();
+            return Err(format!("Erro ao gerar imagem ({status}): {err_text}"));
+        }
+
+        let body: Value = resp.json().await.map_err(|e| format!("Erro ao processar JSON da imagem: {}", e))?;
+
+        let parts = body
+            .pointer("/candidates/0/content/parts")
+            .and_then(|p| p.as_array())
+            .ok_or_else(|| "Resposta não contém blocos válidos de dados".to_string())?;
+
+        for part in parts {
+            if let Some(inline) = part.get("inlineData") {
+                let mime = inline
+                    .get("mimeType")
+                    .and_then(|m| m.as_str())
+                    .unwrap_or("image/jpeg")
+                    .to_string();
+                let b64 = inline
+                    .get("data")
+                    .and_then(|d| d.as_str())
+                    .ok_or_else(|| "Bloco de dados sem base64".to_string())?;
+
+                use base64::Engine;
+                let bytes = base64::engine::general_purpose::STANDARD
+                    .decode(b64)
+                    .map_err(|e| format!("Erro ao decodificar base64 da imagem: {}", e))?;
+
+                return Ok((mime, bytes));
+            }
+        }
+
+        Err("Nenhuma imagem retornada pelo modelo".to_string())
     }
 }

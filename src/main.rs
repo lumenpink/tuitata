@@ -2,6 +2,7 @@ mod app;
 mod config;
 mod context;
 mod gemini;
+mod media;
 mod ollama;
 mod ui;
 
@@ -52,6 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             role: "user".to_string(),
             content: prompt,
             timestamp: String::new(),
+            attachment: None,
         }];
 
         let (tx, mut rx) = mpsc::unbounded_channel::<String>();
@@ -93,14 +95,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut app = App::new(config);
     let mut event_stream = EventStream::new();
     let (chunk_tx, mut chunk_rx) = mpsc::unbounded_channel::<String>();
+    let (done_tx, mut done_rx) = mpsc::unbounded_channel::<()>();
 
     loop {
         terminal.draw(|f| ui::render(f, &app))?;
 
         tokio::select! {
-            // Recebimento de chunks de streaming da API do Gemini
+            // Recebimento de chunks de streaming da API do Gemini ou Ollama
             Some(chunk) = chunk_rx.recv() => {
                 app.append_to_last_model_message(&chunk);
+            }
+
+            // Conclusão da tarefa assíncrona de geração
+            Some(()) = done_rx.recv() => {
+                app.is_generating = false;
             }
 
             // Leitura de eventos de teclado do terminal
@@ -118,6 +126,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     {
                         app.toggle_model();
                         continue;
+                    }
+
+                    // Ctrl+V ou Alt+V: Colar imagem diretamente do Clipboard do sistema
+                    if (key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('v'))
+                        || (key.modifiers == KeyModifiers::ALT && key.code == KeyCode::Char('v'))
+                    {
+                        if let Err(e) = app.attach_clipboard_image() {
+                            app.set_status(&format!("⚠️ {}", e));
+                        }
+                        continue;
+                    }
+
+                    // Ctrl+I: Atalho para anexar imagem via caminho
+                    if key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('i') {
+                        app.input = "/image ".to_string();
+                        app.cursor_pos = app.input.chars().count();
+                        continue;
+                    }
+
+                    // Ctrl+X: Limpar anexo de imagem pendente se houver
+                    if key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('x') {
+                        if app.pending_image.is_some() {
+                            app.clear_pending_image();
+                            continue;
+                        }
                     }
 
                     // Ctrl+S: Exportar para o Obsidian
@@ -198,7 +231,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             }
                             if text.starts_with('/') && !text.contains(' ') && text.len() > 1 {
                                 let word = text.trim_start_matches('/');
-                                let known_cmds = ["model", "m", "top", "bottom", "inicio", "fim", "write", "apply", "gravar", "save", "salvar", "file", "ler", "clear_find", "nofind"];
+                                let known_cmds = [
+                                    "model", "m", "top", "bottom", "inicio", "fim", "write", "apply", "gravar",
+                                    "save", "salvar", "file", "ler", "clear_find", "nofind", "image", "imagem",
+                                    "noimage", "limpar_imagem", "imagine", "gerar"
+                                ];
                                 if !known_cmds.contains(&word) {
                                     app.search_in_messages(word);
                                     app.clear_input();
@@ -246,6 +283,77 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 continue;
                             }
 
+                            // Comandos de Imagem (Visão e Geração)
+                            if text.starts_with("/image ") || text.starts_with("/imagem ") {
+                                let path = if text.starts_with("/image ") {
+                                    text.trim_start_matches("/image ").trim()
+                                } else {
+                                    text.trim_start_matches("/imagem ").trim()
+                                };
+                                if let Err(e) = app.attach_image_file(path) {
+                                    app.set_status(&format!("⚠️ {}", e));
+                                }
+                                app.clear_input();
+                                continue;
+                            }
+
+                            if text == "/noimage" || text == "/limpar_imagem" {
+                                app.clear_pending_image();
+                                app.clear_input();
+                                continue;
+                            }
+
+                            // Geração de Imagem com Gemini Flash Image
+                            if text.starts_with("/imagine ") || text.starts_with("/gerar ") {
+                                let prompt = if text.starts_with("/imagine ") {
+                                    text.trim_start_matches("/imagine ").trim()
+                                } else {
+                                    text.trim_start_matches("/gerar ").trim()
+                                }.to_string();
+
+                                if prompt.is_empty() {
+                                    app.set_status("⚠️ Especifique a descrição da imagem (ex: /imagine capivara de oculos)");
+                                    app.clear_input();
+                                    continue;
+                                }
+
+                                app.add_user_message(format!("🎨 /imagine {}", prompt), None);
+                                app.clear_input();
+                                app.is_generating = true;
+                                app.set_status("🎨 Gerando imagem com Gemini Flash Image...");
+
+                                let client_gemini = GeminiClient::new(app.config.api_key.clone());
+                                let vault_dir = app.config.obsidian_vault.clone();
+                                let p_clone = prompt.clone();
+                                let tx = chunk_tx.clone();
+                                let d_tx = done_tx.clone();
+
+                                tokio::spawn(async move {
+                                    match client_gemini.generate_image(&p_clone).await {
+                                        Ok((mime, bytes)) => {
+                                            match media::save_generated_image(&vault_dir, &p_clone, &mime, &bytes) {
+                                                Ok(saved_path) => {
+                                                    media::open_image_viewer(&saved_path);
+                                                    let resp = format!(
+                                                        "✨ **Imagem gerada com sucesso!**\n\n📁 **Salva em:** `{}`\n🖼️ Visualizador `nsxiv` disparado.",
+                                                        saved_path.display()
+                                                    );
+                                                    let _ = tx.send(resp);
+                                                }
+                                                Err(e) => {
+                                                    let _ = tx.send(format!("⚠️ Erro ao salvar imagem no Obsidian: {}", e));
+                                                }
+                                            }
+                                        }
+                                        Err(e) => {
+                                            let _ = tx.send(format!("❌ Falha ao gerar imagem: {}", e));
+                                        }
+                                    }
+                                    let _ = d_tx.send(());
+                                });
+                                continue;
+                            }
+
                             let (prompt_text, attached_files) = match context::process_input_files(&text) {
                                 Ok(res) => res,
                                 Err(err_msg) => {
@@ -258,7 +366,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 app.set_status(&format!("📎 Anexado: {}", attached_files.join(", ")));
                             }
 
-                            app.add_user_message(prompt_text);
+                            let attachment = app.pending_image.take();
+                            app.add_user_message(prompt_text, attachment);
                             app.clear_input();
                             app.is_generating = true;
 
@@ -270,6 +379,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 || model_name.contains("qwen")
                                 || model_name.contains("ollama");
                             let tx = chunk_tx.clone();
+                            let d_tx = done_tx.clone();
 
                             tokio::spawn(async move {
                                 if is_ollama {
@@ -281,6 +391,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                         let _ = tx.send(format!("\n[Tuitatá Erro Gemini] {}", e));
                                     }
                                 }
+                                let _ = d_tx.send(());
                             });
                         }
                         continue;
@@ -307,12 +418,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
                 }
             }
-        }
-
-        // Se terminou a geração de streaming
-        if app.is_generating && chunk_rx.is_empty() {
-            // Pequeno delay para liberar a trava do gerador
-            app.is_generating = false;
         }
     }
 
