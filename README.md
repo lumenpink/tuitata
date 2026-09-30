@@ -58,10 +58,24 @@ tuitata
 | `/bottom` ou `/fim` | Digite no prompt para saltar imediatamente ao final da conversa |
 | `Esc` ou `Ctrl + C` | Encerra o Tuitatá |
 
-### 3. Modo Pergunta Rápida no Terminal (CLI)
-Você também pode disparar perguntas pontuais diretamente sem abrir o TUI completo:
+### 3. Análise e Interação com Arquivos Locais
+Você pode referenciar arquivos locais diretamente no prompt de duas formas:
+- **Menção direta com `@`**:
+  ```text
+  analise o código em @src/main.rs e explique os atalhos
+  ```
+- **Comando `/file` (ou `/ler`)**:
+  ```text
+  /file Cargo.toml quais dependências estão desatualizadas?
+  ```
+O Tuitatá detecta a sintaxe do arquivo, valida o tamanho (até 500 KB) e injeta o bloco de código formatado automaticamente no prompt para a IA.
+
+### 4. Modo Pergunta Rápida no Terminal (CLI)
+Você também pode disparar perguntas pontuais diretamente com suporte a arquivos sem abrir a TUI:
 ```bash
 tt "explique o que é a lei de Amdahl em 3 linhas"
+tt @Cargo.toml "resuma as dependências do projeto"
+tt /file src/app.rs "encontre possíveis vazamentos de memória"
 ```
 
 ---
