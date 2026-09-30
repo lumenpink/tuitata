@@ -12,7 +12,7 @@ O **Tuitatá** (`tt` / `tuitata`) é um cliente de terminal interativo para inte
 - **Streaming Instantâneo:** Respostas geradas e exibidas em tempo real via Server-Sent Events (SSE).
 - **Exportação para o Obsidian:** Atalho `<Ctrl+S>` salva imediatamente a conversa formatada com metadados YAML dentro de `~/obsidian/01_inbox/`.
 - **Cópia Rápida de Código:** Atalho `<Alt+Y>` copia o último bloco de código para a área de transferência do sistema (`Ctrl+V`).
-- **Alternador de Modelos:** Tecla `<F2>` alterna dinamicamente entre **⚡ Gemini Flash** (ultrarrápido) e **🧠 Gemini Pro** (raciocínio profundo).
+- **Alternador de Modelos:** Atalhos `<Ctrl+P>`, `<Tab>` ou comando `/model` alternam dinamicamente entre **⚡ Gemini Flash** (ultrarrápido) e **🧠 Gemini Pro** (raciocínio profundo).
 - **Estética Boitatá / Cyberpunk:** Cores de alto contraste em Rosa Elétrico (`#ff3c8c`), Amarelo Ácido (`#ffe664`) e Ciano Neon (`#00e6ff`).
 
 ---
@@ -48,7 +48,7 @@ tuitata
 | `Enter` | Envia a mensagem para o Gemini |
 | `← / →` | Move o cursor na barra de entrada de texto (com rolagem horizontal automática) |
 | `Backspace / Del` | Apaga caractere anterior ou posterior ao cursor |
-| `<F2>` | Alterna entre **Gemini Flash** e **Gemini Pro** |
+| `<Ctrl + P>` / `<Tab>` | Alterna entre os modelos de IA (ou digite `/model` / `/m`) |
 | `<Ctrl + S>` | Exporta a conversa para `~/obsidian/01_inbox/` em Markdown |
 | `<Alt + Y>` | Copia o último bloco de código gerado para o clipboard |
 | `PageUp / PageDown` | Rola o histórico da conversa |
