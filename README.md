@@ -14,6 +14,7 @@ O **Tuitatá** (`tt` / `tuitata`) é um cliente de terminal interativo para inte
 - **Cópia Rápida de Código:** Atalho `<Alt+Y>` copia o último bloco de código para a área de transferência do sistema (`Ctrl+V`).
 - **Alternador de Modelos:** Atalhos `<Ctrl+P>`, `<Tab>` ou comando `/model` alternam dinamicamente entre **⚡ Gemini Flash** (ultrarrápido), **🧠 Gemini Pro** (raciocínio avançado) e **🦙 Ollama Local** (`qwen2.5-coder:3b` offline, sem consumir créditos).
 - **Provedor Local Ollama:** Execução 100% offline via API local (`localhost:11434`) com modelos de código (`qwen2.5-coder`) servindo como pré-agente.
+- **Barra de Rolagem Visual:** Indicador vertical à direita exibindo trilho, posição atual e proporção do histórico de mensagens em tempo real.
 - **Estética Boitatá / Cyberpunk:** Cores de alto contraste em Rosa Elétrico (`#ff3c8c`), Amarelo Ácido (`#ffe664`) e Ciano Neon (`#00e6ff`).
 
 ---
