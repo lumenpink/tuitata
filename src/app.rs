@@ -14,6 +14,7 @@ pub struct App {
     pub current_model: String,
     pub scroll: usize,
     pub max_scroll: Cell<usize>,
+    pub auto_scroll: bool,
     pub status: Option<(String, std::time::Instant)>,
     pub search_query: Option<String>,
     pub search_matches: Vec<usize>,
@@ -32,6 +33,7 @@ impl App {
             current_model,
             scroll: 0,
             max_scroll: Cell::new(0),
+            auto_scroll: true,
             status: None,
             search_query: None,
             search_matches: Vec::new(),
@@ -122,6 +124,7 @@ impl App {
             content,
             timestamp: now,
         });
+        self.auto_scroll = true;
         self.scroll_to_bottom();
     }
 
@@ -129,7 +132,9 @@ impl App {
         if let Some(last) = self.messages.last_mut() {
             if last.role == "model" {
                 last.content.push_str(text);
-                self.scroll_to_bottom();
+                if self.auto_scroll {
+                    self.scroll_to_bottom();
+                }
                 return;
             }
         }
@@ -139,18 +144,23 @@ impl App {
             content: text.to_string(),
             timestamp: now,
         });
-        self.scroll_to_bottom();
+        if self.auto_scroll {
+            self.scroll_to_bottom();
+        }
     }
 
     pub fn scroll_to_bottom(&mut self) {
+        self.auto_scroll = true;
         self.scroll = usize::MAX;
     }
 
     pub fn scroll_to_top(&mut self) {
+        self.auto_scroll = false;
         self.scroll = 0;
     }
 
     pub fn scroll_up_lines(&mut self, n: usize) {
+        self.auto_scroll = false;
         let max = self.max_scroll.get();
         let current = if self.scroll > max {
             max
@@ -169,6 +179,7 @@ impl App {
         };
         let next = current.saturating_add(n);
         if next >= max {
+            self.auto_scroll = true;
             self.scroll = usize::MAX;
         } else {
             self.scroll = next;
