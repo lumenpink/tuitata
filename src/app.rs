@@ -160,25 +160,92 @@ impl App {
         Ok(())
     }
 
-    fn extract_last_code_block(&self) -> Option<String> {
+    pub fn extract_last_file_or_code_block(&self) -> Option<(Option<String>, String)> {
         for msg in self.messages.iter().rev() {
             if msg.role == "model" {
                 if let Some(start) = msg.content.rfind("```") {
                     let rest = &msg.content[..start];
                     if let Some(prev) = rest.rfind("```") {
-                        let block = &msg.content[prev + 3..start];
-                        // Remove primeira linha (tipo da linguagem ex: rust, python)
-                        let code = if let Some(newline) = block.find('\n') {
-                            &block[newline + 1..]
+                        let header_and_body = &msg.content[prev + 3..start];
+                        let (header, body) = if let Some(newline) = header_and_body.find('\n') {
+                            (&header_and_body[..newline], &header_and_body[newline + 1..])
                         } else {
-                            block
+                            ("", header_and_body)
                         };
-                        return Some(code.trim().to_string());
+
+                        let header_trimmed = header.trim();
+                        let mut suggested_path = None;
+
+                        // Verifica header no formato `file:<caminho>`, `path:<caminho>` ou `lang:<caminho>`
+                        if let Some(pos) = header_trimmed.find(':') {
+                            let possible_path = header_trimmed[pos + 1..].trim();
+                            if !possible_path.is_empty() {
+                                suggested_path = Some(possible_path.to_string());
+                            }
+                        }
+
+                        // Se não encontrou no header, verifica na primeira linha de comentário do código
+                        if suggested_path.is_none() {
+                            if let Some(first_line) = body.lines().next() {
+                                let trimmed_line = first_line.trim();
+                                if let Some(path_candidate) = trimmed_line.strip_prefix("//")
+                                    .or_else(|| trimmed_line.strip_prefix('#'))
+                                    .or_else(|| trimmed_line.strip_prefix("/*"))
+                                {
+                                    let clean = path_candidate.trim().trim_end_matches("*/").trim();
+                                    if (clean.contains('/') || clean.contains('.')) && !clean.contains(' ') {
+                                        suggested_path = Some(clean.to_string());
+                                    }
+                                }
+                            }
+                        }
+
+                        return Some((suggested_path, body.trim().to_string()));
                     }
                 }
             }
         }
         None
+    }
+
+    fn extract_last_code_block(&self) -> Option<String> {
+        self.extract_last_file_or_code_block().map(|(_, code)| code)
+    }
+
+    pub fn save_last_code_to_file(&mut self, explicit_path: Option<&str>) -> Result<PathBuf, String> {
+        let (suggested, code) = self.extract_last_file_or_code_block()
+            .ok_or_else(|| {
+                let err = "Nenhum bloco de código encontrado para salvar!".to_string();
+                self.set_status(&format!("⚠️ {}", err));
+                err
+            })?;
+
+        let target_str = match explicit_path {
+            Some(p) if !p.trim().is_empty() => p.trim().to_string(),
+            _ => match suggested {
+                Some(p) => p,
+                None => {
+                    let err = "Nenhum caminho detectado. Use /save <caminho> para salvar.".to_string();
+                    self.set_status(&format!("⚠️ {}", err));
+                    return Err(err);
+                }
+            },
+        };
+
+        let target_path = crate::context::expand_path(&target_str);
+        if let Some(parent) = target_path.parent() {
+            let _ = fs::create_dir_all(parent);
+        }
+
+        fs::write(&target_path, code.as_bytes())
+            .map_err(|e| {
+                let err = format!("Falha ao gravar {}: {}", target_path.display(), e);
+                self.set_status(&format!("⚠️ {}", err));
+                err
+            })?;
+
+        self.set_status(&format!("💾 Arquivo gravado: {} ({} bytes)", target_path.display(), code.len()));
+        Ok(target_path)
     }
 
     pub fn export_to_obsidian(&mut self) -> Result<PathBuf, String> {

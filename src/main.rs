@@ -115,6 +115,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         continue;
                     }
 
+                    // Ctrl+W: Gravar arquivo proposto ou último bloco no disco
+                    if key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('w') {
+                        let _ = app.save_last_code_to_file(None);
+                        continue;
+                    }
+
                     // Scroll no chat (otimizado para tablet e terminal padrão)
                     if (key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('u'))
                         || key.code == KeyCode::PageUp
@@ -157,6 +163,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                             }
                             if text == "/bottom" || text == "/fim" {
                                 app.scroll_to_bottom();
+                                app.clear_input();
+                                continue;
+                            }
+                            if text == "/write" || text == "/apply" || text == "/gravar" {
+                                let _ = app.save_last_code_to_file(None);
+                                app.clear_input();
+                                continue;
+                            }
+                            if text.starts_with("/save ") || text.starts_with("/salvar ") {
+                                let path = if text.starts_with("/save ") {
+                                    text.trim_start_matches("/save ").trim()
+                                } else {
+                                    text.trim_start_matches("/salvar ").trim()
+                                };
+                                let _ = app.save_last_code_to_file(Some(path));
                                 app.clear_input();
                                 continue;
                             }

@@ -24,7 +24,14 @@ struct GeminiContent<'a> {
 }
 
 #[derive(Serialize)]
+struct GeminiSystemInstruction<'a> {
+    parts: Vec<GeminiPart<'a>>,
+}
+
+#[derive(Serialize)]
 struct GeminiRequest<'a> {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    system_instruction: Option<GeminiSystemInstruction<'a>>,
     contents: Vec<GeminiContent<'a>>,
 }
 
@@ -62,7 +69,13 @@ impl GeminiClient {
             })
             .collect();
 
-        let payload = GeminiRequest { contents };
+        let sys_prompt = "Você é o Tuitatá, um assistente técnico de alta precisão integrado ao ambiente de terminal Linux. Quando sugerir código ou criar/modificar arquivos, especifique o caminho do arquivo no identificador do bloco markdown como ```file:caminho/do/arquivo.ext ou ```linguagem:caminho/do/arquivo.ext, permitindo que o usuário grave diretamente no disco.";
+        let payload = GeminiRequest {
+            system_instruction: Some(GeminiSystemInstruction {
+                parts: vec![GeminiPart { text: sys_prompt }],
+            }),
+            contents,
+        };
 
         let resp = self
             .client
