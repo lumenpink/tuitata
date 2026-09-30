@@ -139,6 +139,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         continue;
                     }
 
+                    // Ctrl+F: Próxima ocorrência de busca ou iniciar busca no prompt
+                    if key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('f') {
+                        if app.search_query.is_some() && !app.search_matches.is_empty() {
+                            app.next_search_match();
+                        } else {
+                            app.input = "/find ".to_string();
+                            app.cursor_pos = app.input.chars().count();
+                        }
+                        continue;
+                    }
+
                     // Scroll no chat (otimizado para tablet e terminal padrão)
                     if (key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('u'))
                         || key.code == KeyCode::PageUp
@@ -169,6 +180,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     if key.code == KeyCode::Enter && !app.is_generating {
                         let text = app.input.trim().to_string();
                         if !text.is_empty() {
+                            if text == "/clear_find" || text == "/nofind" {
+                                app.clear_search();
+                                app.set_status("Busca textual limpa.");
+                                app.clear_input();
+                                continue;
+                            }
+                            if text.starts_with("/find ") || text.starts_with("/busca ") {
+                                let query = if text.starts_with("/find ") {
+                                    text.trim_start_matches("/find ").trim()
+                                } else {
+                                    text.trim_start_matches("/busca ").trim()
+                                };
+                                app.search_in_messages(query);
+                                app.clear_input();
+                                continue;
+                            }
+                            if text.starts_with('/') && !text.contains(' ') && text.len() > 1 {
+                                let word = text.trim_start_matches('/');
+                                let known_cmds = ["model", "m", "top", "bottom", "inicio", "fim", "write", "apply", "gravar", "save", "salvar", "file", "ler", "clear_find", "nofind"];
+                                if !known_cmds.contains(&word) {
+                                    app.search_in_messages(word);
+                                    app.clear_input();
+                                    continue;
+                                }
+                            }
                             if text == "/model" || text == "/m" {
                                 app.toggle_model();
                                 app.clear_input();

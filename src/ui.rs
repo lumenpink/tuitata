@@ -57,11 +57,62 @@ fn render_header(f: &mut Frame, app: &App, area: Rect) {
     f.render_widget(p, area);
 }
 
+fn highlight_line<'a>(prefix: &'a str, content: &'a str, base_style: Style, query: Option<&str>) -> Line<'a> {
+    let q = match query {
+        Some(s) if !s.is_empty() => s,
+        _ => return Line::from(vec![Span::styled(prefix, base_style), Span::styled(content, base_style)]),
+    };
+
+    let q_lower = q.to_lowercase();
+    let content_lower = content.to_lowercase();
+
+    if !content_lower.contains(&q_lower) {
+        return Line::from(vec![Span::styled(prefix, base_style), Span::styled(content, base_style)]);
+    }
+
+    let mut spans = Vec::new();
+    if !prefix.is_empty() {
+        spans.push(Span::styled(prefix, base_style));
+    }
+
+    let mut current_idx = 0;
+    while let Some(rel_pos) = content_lower[current_idx..].find(&q_lower) {
+        let match_start = current_idx + rel_pos;
+        let match_end = match_start + q.len();
+
+        if match_start > current_idx {
+            spans.push(Span::styled(&content[current_idx..match_start], base_style));
+        }
+
+        spans.push(Span::styled(
+            &content[match_start..match_end],
+            Style::default()
+                .bg(Color::Rgb(255, 120, 0))
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD),
+        ));
+
+        current_idx = match_end;
+    }
+
+    if current_idx < content.len() {
+        spans.push(Span::styled(&content[current_idx..], base_style));
+    }
+
+    Line::from(spans)
+}
+
 fn render_chat(f: &mut Frame, app: &App, area: Rect) {
+    let title = if let Some(ref q) = app.search_query {
+        format!(" Conversa [🔍 Busca: '{}'] ", q)
+    } else {
+        " Conversa ".to_string()
+    };
+
     let block = Block::default()
         .borders(Borders::ALL)
         .border_style(Style::default().fg(Color::DarkGray))
-        .title(" Conversa ");
+        .title(title);
 
     let inner_area = block.inner(area);
     let mut lines = Vec::new();
@@ -85,6 +136,7 @@ fn render_chat(f: &mut Frame, app: &App, area: Rect) {
         ]));
 
         let mut in_code_block = false;
+        let query = app.search_query.as_deref();
         for line_str in msg.content.lines() {
             if line_str.trim_start().starts_with("```") {
                 in_code_block = !in_code_block;
@@ -95,13 +147,11 @@ fn render_chat(f: &mut Frame, app: &App, area: Rect) {
             }
 
             if in_code_block {
-                lines.push(Line::from(vec![
-                    Span::styled(format!("    {}", line_str), Style::default().fg(Color::Rgb(255, 230, 100))), // Acid Yellow
-                ]));
+                let base_style = Style::default().fg(Color::Rgb(255, 230, 100)); // Acid Yellow
+                lines.push(highlight_line("    ", line_str, base_style, query));
             } else {
-                lines.push(Line::from(vec![
-                    Span::styled(format!("  {}", line_str), Style::default().fg(Color::White)),
-                ]));
+                let base_style = Style::default().fg(Color::White);
+                lines.push(highlight_line("  ", line_str, base_style, query));
             }
         }
         lines.push(Line::from(""));

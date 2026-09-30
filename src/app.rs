@@ -15,6 +15,9 @@ pub struct App {
     pub scroll: usize,
     pub max_scroll: Cell<usize>,
     pub status: Option<(String, std::time::Instant)>,
+    pub search_query: Option<String>,
+    pub search_matches: Vec<usize>,
+    pub current_search_idx: usize,
 }
 
 impl App {
@@ -30,6 +33,9 @@ impl App {
             scroll: 0,
             max_scroll: Cell::new(0),
             status: None,
+            search_query: None,
+            search_matches: Vec::new(),
+            current_search_idx: 0,
         }
     }
 
@@ -291,5 +297,69 @@ impl App {
         fs::write(&target_path, doc).map_err(|e| format!("Falha ao salvar no Obsidian: {}", e))?;
         self.set_status(&format!("📝 Conversa salva no Obsidian: 01_inbox/{}", file_name));
         Ok(target_path)
+    }
+
+    pub fn search_in_messages(&mut self, query: &str) -> bool {
+        let q = query.trim();
+        if q.is_empty() {
+            self.search_query = None;
+            self.search_matches.clear();
+            return false;
+        }
+
+        self.search_query = Some(q.to_string());
+        self.search_matches.clear();
+        self.current_search_idx = 0;
+
+        let q_lower = q.to_lowercase();
+        let mut line_offset = 0;
+
+        for msg in &self.messages {
+            let msg_text_lower = msg.content.to_lowercase();
+            if msg_text_lower.contains(&q_lower) {
+                self.search_matches.push(line_offset);
+            }
+            line_offset += msg.content.lines().count() + 2;
+        }
+
+        if !self.search_matches.is_empty() {
+            self.scroll = self.search_matches[0];
+            self.set_status(&format!(
+                "🔍 Encontrado [1/{}] para '{}' (Ctrl+F para próxima)",
+                self.search_matches.len(),
+                q
+            ));
+            true
+        } else {
+            self.set_status(&format!("⚠️ Nenhuma ocorrência para '{}'", q));
+            false
+        }
+    }
+
+    pub fn next_search_match(&mut self) {
+        if self.search_matches.is_empty() {
+            if let Some(ref q) = self.search_query {
+                self.set_status(&format!("⚠️ Nenhuma ocorrência para '{}'", q));
+            } else {
+                self.set_status("⚠️ Nenhuma busca ativa. Digite /find <termo>");
+            }
+            return;
+        }
+
+        self.current_search_idx = (self.current_search_idx + 1) % self.search_matches.len();
+        self.scroll = self.search_matches[self.current_search_idx];
+        let q = self.search_query.as_deref().unwrap_or("");
+        self.set_status(&format!(
+            "🔍 Ocorrência [{}/{}] para '{}' (Ctrl+F para próxima)",
+            self.current_search_idx + 1,
+            self.search_matches.len(),
+            q
+        ));
+    }
+
+    pub fn clear_search(&mut self) {
+        self.search_query = None;
+        self.search_matches.clear();
+        self.current_search_idx = 0;
     }
 }
