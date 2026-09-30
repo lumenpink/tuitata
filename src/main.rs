@@ -118,7 +118,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let text = app.input.trim().to_string();
                         if !text.is_empty() {
                             app.add_user_message(text);
-                            app.input.clear();
+                            app.clear_input();
                             app.is_generating = true;
 
                             let client_clone = GeminiClient::new(app.config.api_key.clone());
@@ -133,13 +133,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         continue;
                     }
 
-                    // Digitação na barra de entrada
+                    // Digitação e navegação na barra de entrada
                     match key.code {
                         KeyCode::Char(c) => {
-                            app.input.push(c);
+                            app.insert_char(c);
                         }
                         KeyCode::Backspace => {
-                            app.input.pop();
+                            app.delete_char_before();
+                        }
+                        KeyCode::Delete => {
+                            app.delete_char_after();
+                        }
+                        KeyCode::Left => {
+                            app.move_cursor_left();
+                        }
+                        KeyCode::Right => {
+                            app.move_cursor_right();
                         }
                         _ => {}
                     }

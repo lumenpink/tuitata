@@ -8,6 +8,7 @@ pub struct App {
     pub config: Config,
     pub messages: Vec<ChatMessage>,
     pub input: String,
+    pub cursor_pos: usize,
     pub is_generating: bool,
     pub current_model: String,
     pub scroll: usize,
@@ -21,11 +22,57 @@ impl App {
             config,
             messages: Vec::new(),
             input: String::new(),
+            cursor_pos: 0,
             is_generating: false,
             current_model,
             scroll: 0,
             status: None,
         }
+    }
+
+    pub fn insert_char(&mut self, c: char) {
+        let mut chars: Vec<char> = self.input.chars().collect();
+        if self.cursor_pos > chars.len() {
+            self.cursor_pos = chars.len();
+        }
+        chars.insert(self.cursor_pos, c);
+        self.input = chars.into_iter().collect();
+        self.cursor_pos += 1;
+    }
+
+    pub fn delete_char_before(&mut self) {
+        if self.cursor_pos > 0 {
+            let mut chars: Vec<char> = self.input.chars().collect();
+            if self.cursor_pos <= chars.len() {
+                chars.remove(self.cursor_pos - 1);
+                self.input = chars.into_iter().collect();
+                self.cursor_pos -= 1;
+            }
+        }
+    }
+
+    pub fn delete_char_after(&mut self) {
+        let mut chars: Vec<char> = self.input.chars().collect();
+        if self.cursor_pos < chars.len() {
+            chars.remove(self.cursor_pos);
+            self.input = chars.into_iter().collect();
+        }
+    }
+
+    pub fn move_cursor_left(&mut self) {
+        self.cursor_pos = self.cursor_pos.saturating_sub(1);
+    }
+
+    pub fn move_cursor_right(&mut self) {
+        let len = self.input.chars().count();
+        if self.cursor_pos < len {
+            self.cursor_pos += 1;
+        }
+    }
+
+    pub fn clear_input(&mut self) {
+        self.input.clear();
+        self.cursor_pos = 0;
     }
 
     pub fn set_status(&mut self, msg: &str) {

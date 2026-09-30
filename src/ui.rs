@@ -133,18 +133,45 @@ fn render_input(f: &mut Frame, app: &App, area: Rect) {
         .border_style(Style::default().fg(border_color))
         .title(title);
 
-    let display_text = if app.input.is_empty() && !app.is_generating {
-        Span::styled("Digite uma dúvida ou instrução para a IA...", Style::default().fg(Color::DarkGray))
+    let inner = block.inner(area);
+    let inner_width = inner.width as usize;
+
+    if app.input.is_empty() && !app.is_generating {
+        let display_text = Span::styled("Digite uma dúvida ou instrução para a IA...", Style::default().fg(Color::DarkGray));
+        let p = Paragraph::new(display_text).block(block);
+        f.render_widget(p, area);
+        f.set_cursor_position((inner.x, inner.y));
+        return;
+    }
+
+    let chars: Vec<char> = app.input.chars().collect();
+    let char_count = chars.len();
+    let cursor_pos = app.cursor_pos.min(char_count);
+
+    let scroll_offset = if inner_width == 0 {
+        0
+    } else if cursor_pos >= inner_width {
+        cursor_pos - inner_width + 1
     } else {
-        Span::styled(&app.input, Style::default().fg(Color::White))
+        0
     };
 
+    let end_idx = (scroll_offset + inner_width).min(char_count);
+    let visible_slice: String = if scroll_offset < char_count {
+        chars[scroll_offset..end_idx].iter().collect()
+    } else {
+        String::new()
+    };
+
+    let display_text = Span::styled(visible_slice, Style::default().fg(Color::White));
     let p = Paragraph::new(display_text).block(block);
     f.render_widget(p, area);
 
     // Posiciona o cursor visual na barra de entrada
     if !app.is_generating {
-        f.set_cursor_position((area.x + (app.input.len() as u16) + 1, area.y + 1));
+        let cursor_x = inner.x + (cursor_pos.saturating_sub(scroll_offset) as u16);
+        let max_x = inner.x + inner.width.saturating_sub(1);
+        f.set_cursor_position((cursor_x.min(max_x), inner.y));
     }
 }
 
