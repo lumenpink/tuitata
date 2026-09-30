@@ -3,7 +3,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph, Wrap},
+    widgets::{Block, Borders, Paragraph, Scrollbar, ScrollbarOrientation, ScrollbarState, Wrap},
     Frame,
 };
 
@@ -179,6 +179,17 @@ fn render_chat(f: &mut Frame, app: &App, area: Rect) {
         .scroll((actual_scroll, 0));
 
     f.render_widget(p, area);
+
+    // Barra de rolagem visual à direita
+    let mut scrollbar_state = ScrollbarState::new(max_scroll).position(actual_scroll as usize);
+    let scrollbar = Scrollbar::new(ScrollbarOrientation::VerticalRight)
+        .begin_symbol(Some("▲"))
+        .end_symbol(Some("▼"))
+        .track_symbol(Some("│"))
+        .thumb_symbol("█")
+        .style(Style::default().fg(Color::Rgb(255, 60, 140))); // Rosa Neon Boitatá
+
+    f.render_stateful_widget(scrollbar, area, &mut scrollbar_state);
 }
 
 fn render_input(f: &mut Frame, app: &App, area: Rect) {
