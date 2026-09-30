@@ -12,7 +12,8 @@ O **Tuitatá** (`tt` / `tuitata`) é um cliente de terminal interativo para inte
 - **Streaming Instantâneo:** Respostas geradas e exibidas em tempo real via Server-Sent Events (SSE).
 - **Exportação para o Obsidian:** Atalho `<Ctrl+S>` salva imediatamente a conversa formatada com metadados YAML dentro de `~/obsidian/01_inbox/`.
 - **Cópia Rápida de Código:** Atalho `<Alt+Y>` copia o último bloco de código para a área de transferência do sistema (`Ctrl+V`).
-- **Alternador de Modelos:** Atalhos `<Ctrl+P>`, `<Tab>` ou comando `/model` alternam dinamicamente entre **⚡ Gemini Flash** (ultrarrápido) e **🧠 Gemini Pro** (raciocínio profundo).
+- **Alternador de Modelos:** Atalhos `<Ctrl+P>`, `<Tab>` ou comando `/model` alternam dinamicamente entre **⚡ Gemini Flash** (ultrarrápido), **🧠 Gemini Pro** (raciocínio avançado) e **🦙 Ollama Local** (`qwen2.5-coder:3b` offline, sem consumir créditos).
+- **Provedor Local Ollama:** Execução 100% offline via API local (`localhost:11434`) com modelos de código (`qwen2.5-coder`) servindo como pré-agente.
 - **Estética Boitatá / Cyberpunk:** Cores de alto contraste em Rosa Elétrico (`#ff3c8c`), Amarelo Ácido (`#ffe664`) e Ciano Neon (`#00e6ff`).
 
 ---
@@ -85,15 +86,19 @@ Você também pode disparar perguntas pontuais diretamente com suporte a arquivo
 tt "explique o que é a lei de Amdahl em 3 linhas"
 tt @Cargo.toml "resuma as dependências do projeto"
 tt /file src/app.rs "encontre possíveis vazamentos de memória"
+
+# Execução offline via Ollama local (zero consumo de créditos)
+tt --ollama @src/main.rs "analise o código com o qwen-coder"
 ```
 
 ---
 
 ## ⚙️ Configuração
 
-O Tuitatá busca automaticamente a chave `GEMINI_API_KEY`:
-1. Na variável de ambiente `GEMINI_API_KEY`;
-2. No arquivo `~/.env`.
+O Tuitatá busca automaticamente suas configurações:
+1. **Google Gemini:** Chave em `GEMINI_API_KEY` (ambiente ou `~/.env`);
+2. **Ollama Local:** URL padrão `http://localhost:11434` (configurável via `OLLAMA_URL`) e modelo padrão `qwen2.5-coder:3b` (configurável via `OLLAMA_MODEL`);
+3. **Obsidian:** Exportação automática em `~/obsidian/01_inbox/`.
 
 ---
 
