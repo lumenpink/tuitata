@@ -1,6 +1,6 @@
 # 🔥 Tuitatá (`tt`)
 > **Cliente TUI para Google Gemini em Rust com streaming, estética Boitatá e exportação para o Obsidian.**  
-> Desenvolvido no padrão **GOST** (Lumen Profile) para o ecossistema Baquará.
+> Desenvolvido no padrão **GOST** (Lumen Profile) para o ecossistema Baquara.
 
 ---
 

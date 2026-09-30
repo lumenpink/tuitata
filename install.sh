@@ -10,8 +10,7 @@ cargo build --release
 
 echo "==> [Tuitatá] Instalando binário em ~/.local/bin..."
 mkdir -p ~/.local/bin
-cp target/release/tuitata ~/.local/bin/tuitata
-chmod +x ~/.local/bin/tuitata
+install -m 755 target/release/tuitata ~/.local/bin/tuitata
 
 # Criar atalhos curtos tt e ttt
 ln -sf ~/.local/bin/tuitata ~/.local/bin/tt

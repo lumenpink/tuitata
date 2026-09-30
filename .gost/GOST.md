@@ -2,7 +2,7 @@
 
 ## 1. Identificação do Projeto
 - **Nome:** Tuitatá (`tuitata` / `tt`)
-- **Ecossistema:** Baquará
+- **Ecossistema:** Baquara
 - **Perfil:** Lumen (`profiles/lumen.md`)
 - **Linguagem:** Rust (2021)
 - **Escopo:** Cliente TUI de alta velocidade para o Google Gemini com suporte a streaming, histórico local e exportação Obsidian.

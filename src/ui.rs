@@ -155,10 +155,10 @@ fn render_footer(f: &mut Frame, app: &App, area: Rect) {
                 Span::styled(format!(" 📢 {}", msg), Style::default().fg(Color::Rgb(100, 255, 100)).add_modifier(Modifier::BOLD)),
             ])
         } else {
-            Line::from(Span::styled(" Tuitatá v0.1.0 │ Padrão GOST / Baquará", Style::default().fg(Color::DarkGray)))
+            Line::from(Span::styled(" Tuitatá v0.1.0 │ Padrão GOST / Baquara", Style::default().fg(Color::DarkGray)))
         }
     } else {
-        Line::from(Span::styled(" Tuitatá v0.1.0 │ Padrão GOST / Baquará", Style::default().fg(Color::DarkGray)))
+        Line::from(Span::styled(" Tuitatá v0.1.0 │ Padrão GOST / Baquara", Style::default().fg(Color::DarkGray)))
     };
 
     let p = Paragraph::new(status_line);
