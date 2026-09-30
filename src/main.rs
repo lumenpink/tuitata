@@ -1,5 +1,6 @@
 mod app;
 mod config;
+mod context;
 mod gemini;
 mod ui;
 
@@ -30,9 +31,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = GeminiClient::new(config.api_key.clone());
 
-    // Se argumentos foram passados diretamente no terminal (modo CLI pontual: `tt "dúvida"`)
+    // Se argumentos foram passados diretamente no terminal (modo CLI pontual: `tt "dúvida"` ou `tt @arquivo "pergunta"`)
     if !args.is_empty() {
-        let prompt = args.join(" ");
+        let raw_prompt = args.join(" ");
+        let (prompt, _) = match context::process_input_files(&raw_prompt) {
+            Ok(res) => res,
+            Err(e) => {
+                eprintln!("[Tuitatá Erro de Arquivo] {}", e);
+                std::process::exit(1);
+            }
+        };
+
         let messages = vec![gemini::ChatMessage {
             role: "user".to_string(),
             content: prompt,
@@ -152,7 +161,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                 continue;
                             }
 
-                            app.add_user_message(text);
+                            let (prompt_text, attached_files) = match context::process_input_files(&text) {
+                                Ok(res) => res,
+                                Err(err_msg) => {
+                                    app.set_status(&format!("⚠️ {}", err_msg));
+                                    continue;
+                                }
+                            };
+
+                            if !attached_files.is_empty() {
+                                app.set_status(&format!("📎 Anexado: {}", attached_files.join(", ")));
+                            }
+
+                            app.add_user_message(prompt_text);
                             app.clear_input();
                             app.is_generating = true;
 
