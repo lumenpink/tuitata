@@ -51,7 +51,11 @@ tuitata
 | `<Ctrl + P>` / `<Tab>` | Alterna entre os modelos de IA (ou digite `/model` / `/m`) |
 | `<Ctrl + S>` | Exporta a conversa para `~/obsidian/01_inbox/` em Markdown |
 | `<Alt + Y>` | Copia o último bloco de código gerado para o clipboard |
-| `PageUp / PageDown` | Rola o histórico da conversa |
+| `<Ctrl + U>` / `<Ctrl + D>` | Rola meia página para cima ou para baixo (ideal para tablets) |
+| `<Ctrl + K>` / `<Ctrl + J>` | Rola uma linha para cima ou para baixo (`Alt+↑` / `Alt+↓`) |
+| `PageUp / PageDown` | Rola blocos do histórico da conversa |
+| `/top` ou `/inicio` | Digite no prompt para saltar imediatamente ao início da conversa |
+| `/bottom` ou `/fim` | Digite no prompt para saltar imediatamente ao final da conversa |
 | `Esc` ou `Ctrl + C` | Encerra o Tuitatá |
 
 ### 3. Modo Pergunta Rápida no Terminal (CLI)
