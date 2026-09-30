@@ -1,0 +1,23 @@
+[package]
+name = "tuitata"
+version = "0.1.0-dev.1"
+edition = "2021"
+authors = ["Lumen <lumen@baquara.local>"]
+description = "TUI client para Google Gemini com streaming, histórico, estética Boitatá e exportação Obsidian"
+
+[[bin]]
+name = "tuitata"
+path = "src/main.rs"
+
+[dependencies]
+ratatui = "0.29"
+crossterm = { version = "0.28", features = ["event-stream"] }
+tokio = { version = "1.40", features = ["full"] }
+reqwest = { version = "0.12", features = ["json", "stream"] }
+futures = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+dirs = "5.0"
+chrono = "0.4"
+arboard = "3.4"
