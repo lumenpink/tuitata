@@ -1,6 +1,7 @@
 use crate::config::Config;
 use crate::gemini::ChatMessage;
 use chrono::Local;
+use std::cell::Cell;
 use std::fs;
 use std::path::PathBuf;
 
@@ -12,6 +13,7 @@ pub struct App {
     pub is_generating: bool,
     pub current_model: String,
     pub scroll: usize,
+    pub max_scroll: Cell<usize>,
     pub status: Option<(String, std::time::Instant)>,
 }
 
@@ -26,6 +28,7 @@ impl App {
             is_generating: false,
             current_model,
             scroll: 0,
+            max_scroll: Cell::new(0),
             status: None,
         }
     }
@@ -120,12 +123,33 @@ impl App {
         self.scroll = usize::MAX;
     }
 
-    pub fn scroll_up(&mut self) {
-        self.scroll = self.scroll.saturating_sub(3);
+    pub fn scroll_to_top(&mut self) {
+        self.scroll = 0;
     }
 
-    pub fn scroll_down(&mut self) {
-        self.scroll = self.scroll.saturating_add(3);
+    pub fn scroll_up_lines(&mut self, n: usize) {
+        let max = self.max_scroll.get();
+        let current = if self.scroll > max {
+            max
+        } else {
+            self.scroll
+        };
+        self.scroll = current.saturating_sub(n);
+    }
+
+    pub fn scroll_down_lines(&mut self, n: usize) {
+        let max = self.max_scroll.get();
+        let current = if self.scroll > max {
+            max
+        } else {
+            self.scroll
+        };
+        let next = current.saturating_add(n);
+        if next >= max {
+            self.scroll = usize::MAX;
+        } else {
+            self.scroll = next;
+        }
     }
 
     pub fn copy_last_code_block(&mut self) -> Result<(), String> {

@@ -102,9 +102,20 @@ fn render_chat(f: &mut Frame, app: &App, area: Rect) {
         lines.push(Line::from(""));
     }
 
-    let total_lines = lines.len();
+    let width = inner_area.width.max(1) as usize;
+    let mut rendered_lines = 0;
+    for line in &lines {
+        let line_len: usize = line.spans.iter().map(|s| s.content.chars().count()).sum();
+        if line_len == 0 {
+            rendered_lines += 1;
+        } else {
+            rendered_lines += (line_len + width - 1) / width;
+        }
+    }
+
     let visible_lines = inner_area.height as usize;
-    let max_scroll = total_lines.saturating_sub(visible_lines);
+    let max_scroll = rendered_lines.saturating_sub(visible_lines);
+    app.max_scroll.set(max_scroll);
     let actual_scroll = app.scroll.min(max_scroll) as u16;
 
     let p = Paragraph::new(lines)

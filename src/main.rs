@@ -106,13 +106,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         continue;
                     }
 
-                    // Scroll no chat
-                    if key.code == KeyCode::PageUp {
-                        app.scroll_up();
+                    // Scroll no chat (otimizado para tablet e terminal padrão)
+                    if (key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('u'))
+                        || key.code == KeyCode::PageUp
+                    {
+                        app.scroll_up_lines(10);
                         continue;
                     }
-                    if key.code == KeyCode::PageDown {
-                        app.scroll_down();
+                    if (key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('d'))
+                        || key.code == KeyCode::PageDown
+                    {
+                        app.scroll_down_lines(10);
+                        continue;
+                    }
+                    if (key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('k'))
+                        || (key.modifiers == KeyModifiers::ALT && key.code == KeyCode::Up)
+                    {
+                        app.scroll_up_lines(1);
+                        continue;
+                    }
+                    if (key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('j'))
+                        || (key.modifiers == KeyModifiers::ALT && key.code == KeyCode::Down)
+                    {
+                        app.scroll_down_lines(1);
                         continue;
                     }
 
@@ -122,6 +138,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         if !text.is_empty() {
                             if text == "/model" || text == "/m" {
                                 app.toggle_model();
+                                app.clear_input();
+                                continue;
+                            }
+                            if text == "/top" || text == "/inicio" {
+                                app.scroll_to_top();
+                                app.clear_input();
+                                continue;
+                            }
+                            if text == "/bottom" || text == "/fim" {
+                                app.scroll_to_bottom();
                                 app.clear_input();
                                 continue;
                             }
