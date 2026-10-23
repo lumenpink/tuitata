@@ -31,6 +31,10 @@ O instalador compilará o binário otimizado em release e criará os links em `~
 - `tt`
 - `ttt`
 
+### Compilação Estática e Otimização Soberana (GOST 1.5.0)
+- **Perfil de Release Otimizado:** `opt-level = 3`, `lto = "fat"`, `codegen-units = 1`, `panic = "abort"` e `strip = true`.
+- **Linking Estático musl:** Suporte hermético com `target-feature=+crt-static` para distribuição `static-pie` universal sem dependências externas.
+
 ---
 
 ## 💻 Como Usar
