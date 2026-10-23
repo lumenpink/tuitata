@@ -216,7 +216,7 @@ fn render_chat(f: &mut Frame, app: &App, area: Rect) {
         if line_len == 0 {
             rendered_lines += 1;
         } else {
-            rendered_lines += (line_len + width - 1) / width;
+            rendered_lines += line_len.div_ceil(width);
         }
     }
 

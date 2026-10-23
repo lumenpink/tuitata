@@ -152,11 +152,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     }
 
                     // Ctrl+X: Limpar anexo de imagem pendente se houver
-                    if key.modifiers == KeyModifiers::CONTROL && key.code == KeyCode::Char('x') {
-                        if app.pending_image.is_some() {
-                            app.clear_pending_image();
-                            continue;
-                        }
+                    if key.modifiers == KeyModifiers::CONTROL
+                        && key.code == KeyCode::Char('x')
+                        && app.pending_image.is_some()
+                    {
+                        app.clear_pending_image();
+                        continue;
                     }
 
                     // Ctrl+S: Exportar para o Obsidian
