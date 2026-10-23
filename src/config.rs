@@ -19,14 +19,17 @@ pub struct Config {
 impl Config {
     pub fn load() -> Result<Self, String> {
         let api_key = Self::find_api_key().ok_or_else(|| {
-            "GEMINI_API_KEY não encontrada! Configure no ~/.env ou como variável de ambiente.".to_string()
+            "GEMINI_API_KEY não encontrada! Configure no ~/.env ou como variável de ambiente."
+                .to_string()
         })?;
 
         let home = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/home/lumen"));
         let obsidian_vault = home.join("obsidian");
 
-        let ollama_model = std::env::var("OLLAMA_MODEL").unwrap_or_else(|_| DEFAULT_OLLAMA_MODEL.to_string());
-        let ollama_url = std::env::var("OLLAMA_URL").unwrap_or_else(|_| DEFAULT_OLLAMA_URL.to_string());
+        let ollama_model =
+            std::env::var("OLLAMA_MODEL").unwrap_or_else(|_| DEFAULT_OLLAMA_MODEL.to_string());
+        let ollama_url =
+            std::env::var("OLLAMA_URL").unwrap_or_else(|_| DEFAULT_OLLAMA_URL.to_string());
 
         Ok(Self {
             api_key,
@@ -53,7 +56,9 @@ impl Config {
                 for line in content.lines() {
                     let trimmed = line.trim();
                     if trimmed.starts_with("GEMINI_API_KEY=") {
-                        let val = trimmed.split_once('=').map(|(_, v)| v.trim().trim_matches('"').trim_matches('\''));
+                        let val = trimmed
+                            .split_once('=')
+                            .map(|(_, v)| v.trim().trim_matches('"').trim_matches('\''));
                         if let Some(k) = val {
                             if !k.is_empty() {
                                 return Some(k.to_string());

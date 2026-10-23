@@ -34,11 +34,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Se argumentos foram passados diretamente no terminal (modo CLI pontual: `tt "dúvida"` ou `tt --ollama "dúvida"`)
     if !args.is_empty() {
-        let (use_ollama, clean_args): (bool, Vec<String>) = if args.iter().any(|a| a == "--ollama" || a == "-o") {
-            (true, args.into_iter().filter(|a| a != "--ollama" && a != "-o").collect())
-        } else {
-            (false, args)
-        };
+        let (use_ollama, clean_args): (bool, Vec<String>) =
+            if args.iter().any(|a| a == "--ollama" || a == "-o") {
+                (
+                    true,
+                    args.into_iter()
+                        .filter(|a| a != "--ollama" && a != "-o")
+                        .collect(),
+                )
+            } else {
+                (false, args)
+            };
 
         let raw_prompt = clean_args.join(" ");
         let (prompt, _) = match context::process_input_files(&raw_prompt) {

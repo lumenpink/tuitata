@@ -98,7 +98,10 @@ impl App {
             self.set_status("Alternado para modelo: 🧠 Gemini Pro (Raciocínio Profundo)");
         } else if self.current_model == self.config.pro_model {
             self.current_model = self.config.ollama_model.clone();
-            self.set_status(&format!("Alternado para modelo: 🦙 Ollama Local ({})", self.config.ollama_model));
+            self.set_status(&format!(
+                "Alternado para modelo: 🦙 Ollama Local ({})",
+                self.config.ollama_model
+            ));
         } else {
             self.current_model = self.config.flash_model.clone();
             self.set_status("Alternado para modelo: ⚡ Gemini Flash (Ultrarrápido)");
@@ -109,7 +112,10 @@ impl App {
         let t = target.to_lowercase();
         if t.contains("ollama") || t.contains("local") || t.contains("qwen") {
             self.current_model = self.config.ollama_model.clone();
-            self.set_status(&format!("Alternado para modelo: 🦙 Ollama Local ({})", self.config.ollama_model));
+            self.set_status(&format!(
+                "Alternado para modelo: 🦙 Ollama Local ({})",
+                self.config.ollama_model
+            ));
         } else if t.contains("pro") {
             self.current_model = self.config.pro_model.clone();
             self.set_status("Alternado para modelo: 🧠 Gemini Pro (Raciocínio Profundo)");
@@ -119,7 +125,11 @@ impl App {
         }
     }
 
-    pub fn add_user_message(&mut self, content: String, attachment: Option<crate::gemini::ImageAttachment>) {
+    pub fn add_user_message(
+        &mut self,
+        content: String,
+        attachment: Option<crate::gemini::ImageAttachment>,
+    ) {
         let now = Local::now().format("%H:%M").to_string();
         self.messages.push(ChatMessage {
             role: "user".to_string(),
@@ -143,7 +153,10 @@ impl App {
         let att = crate::media::load_image_from_clipboard()?;
         let name = att.filename.clone();
         self.pending_image = Some(att);
-        self.set_status(&format!("Imagem colada da área de transferência: 📎 {}", name));
+        self.set_status(&format!(
+            "Imagem colada da área de transferência: 📎 {}",
+            name
+        ));
         Ok(())
     }
 
@@ -189,21 +202,13 @@ impl App {
     pub fn scroll_up_lines(&mut self, n: usize) {
         self.auto_scroll = false;
         let max = self.max_scroll.get();
-        let current = if self.scroll > max {
-            max
-        } else {
-            self.scroll
-        };
+        let current = if self.scroll > max { max } else { self.scroll };
         self.scroll = current.saturating_sub(n);
     }
 
     pub fn scroll_down_lines(&mut self, n: usize) {
         let max = self.max_scroll.get();
-        let current = if self.scroll > max {
-            max
-        } else {
-            self.scroll
-        };
+        let current = if self.scroll > max { max } else { self.scroll };
         let next = current.saturating_add(n);
         if next >= max {
             self.auto_scroll = true;
@@ -214,9 +219,14 @@ impl App {
     }
 
     pub fn copy_last_code_block(&mut self) -> Result<(), String> {
-        let code = self.extract_last_code_block().ok_or("Nenhum bloco de código encontrado nas respostas!")?;
-        let mut clipboard = arboard::Clipboard::new().map_err(|e| format!("Clipboard erro: {}", e))?;
-        clipboard.set_text(code).map_err(|e| format!("Clipboard erro: {}", e))?;
+        let code = self
+            .extract_last_code_block()
+            .ok_or("Nenhum bloco de código encontrado nas respostas!")?;
+        let mut clipboard =
+            arboard::Clipboard::new().map_err(|e| format!("Clipboard erro: {}", e))?;
+        clipboard
+            .set_text(code)
+            .map_err(|e| format!("Clipboard erro: {}", e))?;
         self.set_status("📋 Bloco de código copiado para a área de transferência!");
         Ok(())
     }
@@ -249,12 +259,15 @@ impl App {
                         if suggested_path.is_none() {
                             if let Some(first_line) = body.lines().next() {
                                 let trimmed_line = first_line.trim();
-                                if let Some(path_candidate) = trimmed_line.strip_prefix("//")
+                                if let Some(path_candidate) = trimmed_line
+                                    .strip_prefix("//")
                                     .or_else(|| trimmed_line.strip_prefix('#'))
                                     .or_else(|| trimmed_line.strip_prefix("/*"))
                                 {
                                     let clean = path_candidate.trim().trim_end_matches("*/").trim();
-                                    if (clean.contains('/') || clean.contains('.')) && !clean.contains(' ') {
+                                    if (clean.contains('/') || clean.contains('.'))
+                                        && !clean.contains(' ')
+                                    {
                                         suggested_path = Some(clean.to_string());
                                     }
                                 }
@@ -273,20 +286,23 @@ impl App {
         self.extract_last_file_or_code_block().map(|(_, code)| code)
     }
 
-    pub fn save_last_code_to_file(&mut self, explicit_path: Option<&str>) -> Result<PathBuf, String> {
-        let (suggested, code) = self.extract_last_file_or_code_block()
-            .ok_or_else(|| {
-                let err = "Nenhum bloco de código encontrado para salvar!".to_string();
-                self.set_status(&format!("⚠️ {}", err));
-                err
-            })?;
+    pub fn save_last_code_to_file(
+        &mut self,
+        explicit_path: Option<&str>,
+    ) -> Result<PathBuf, String> {
+        let (suggested, code) = self.extract_last_file_or_code_block().ok_or_else(|| {
+            let err = "Nenhum bloco de código encontrado para salvar!".to_string();
+            self.set_status(&format!("⚠️ {}", err));
+            err
+        })?;
 
         let target_str = match explicit_path {
             Some(p) if !p.trim().is_empty() => p.trim().to_string(),
             _ => match suggested {
                 Some(p) => p,
                 None => {
-                    let err = "Nenhum caminho detectado. Use /save <caminho> para salvar.".to_string();
+                    let err =
+                        "Nenhum caminho detectado. Use /save <caminho> para salvar.".to_string();
                     self.set_status(&format!("⚠️ {}", err));
                     return Err(err);
                 }
@@ -298,14 +314,17 @@ impl App {
             let _ = fs::create_dir_all(parent);
         }
 
-        fs::write(&target_path, code.as_bytes())
-            .map_err(|e| {
-                let err = format!("Falha ao gravar {}: {}", target_path.display(), e);
-                self.set_status(&format!("⚠️ {}", err));
-                err
-            })?;
+        fs::write(&target_path, code.as_bytes()).map_err(|e| {
+            let err = format!("Falha ao gravar {}: {}", target_path.display(), e);
+            self.set_status(&format!("⚠️ {}", err));
+            err
+        })?;
 
-        self.set_status(&format!("💾 Arquivo gravado: {} ({} bytes)", target_path.display(), code.len()));
+        self.set_status(&format!(
+            "💾 Arquivo gravado: {} ({} bytes)",
+            target_path.display(),
+            code.len()
+        ));
         Ok(target_path)
     }
 
@@ -328,17 +347,27 @@ impl App {
         );
 
         for m in &self.messages {
-            let role_label = if m.role == "user" { "👤 **Você**" } else { "🔥 **Tuitatá**" };
+            let role_label = if m.role == "user" {
+                "👤 **Você**"
+            } else {
+                "🔥 **Tuitatá**"
+            };
             let att_str = if let Some(att) = &m.attachment {
                 format!("\n> 📎 *Imagem anexada:* `{}`\n\n", att.filename)
             } else {
                 String::new()
             };
-            doc.push_str(&format!("### {} ({})\n\n{}{}\n\n---\n\n", role_label, m.timestamp, att_str, m.content));
+            doc.push_str(&format!(
+                "### {} ({})\n\n{}{}\n\n---\n\n",
+                role_label, m.timestamp, att_str, m.content
+            ));
         }
 
         fs::write(&target_path, doc).map_err(|e| format!("Falha ao salvar no Obsidian: {}", e))?;
-        self.set_status(&format!("📝 Conversa salva no Obsidian: 01_inbox/{}", file_name));
+        self.set_status(&format!(
+            "📝 Conversa salva no Obsidian: 01_inbox/{}",
+            file_name
+        ));
         Ok(target_path)
     }
 

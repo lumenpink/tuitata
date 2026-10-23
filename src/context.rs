@@ -48,7 +48,8 @@ pub fn read_file_content(path_str: &str) -> Result<(String, String), String> {
         return Err(format!("O caminho não é um arquivo regular: {}", path_str));
     }
 
-    let metadata = fs::metadata(&path).map_err(|e| format!("Falha ao ler metadados de {}: {}", path_str, e))?;
+    let metadata = fs::metadata(&path)
+        .map_err(|e| format!("Falha ao ler metadados de {}: {}", path_str, e))?;
     if metadata.len() > MAX_FILE_SIZE {
         return Err(format!(
             "Arquivo muito grande ({} KB). O limite máximo suportado é de 500 KB.",
@@ -56,8 +57,12 @@ pub fn read_file_content(path_str: &str) -> Result<(String, String), String> {
         ));
     }
 
-    let content = fs::read_to_string(&path)
-        .map_err(|e| format!("Falha ao ler conteúdo do arquivo {}: {}. Verifique se é texto UTF-8.", path_str, e))?;
+    let content = fs::read_to_string(&path).map_err(|e| {
+        format!(
+            "Falha ao ler conteúdo do arquivo {}: {}. Verifique se é texto UTF-8.",
+            path_str, e
+        )
+    })?;
 
     let lang = get_file_lang(&path);
     let formatted = format!(
@@ -82,7 +87,10 @@ pub fn process_input_files(raw_input: &str) -> Result<(String, Vec<String>), Str
 
         let mut parts = rest.splitn(2, ' ');
         let file_path = parts.next().unwrap_or("").trim();
-        let question = parts.next().unwrap_or("Analise o conteúdo do arquivo acima.").trim();
+        let question = parts
+            .next()
+            .unwrap_or("Analise o conteúdo do arquivo acima.")
+            .trim();
 
         if file_path.is_empty() {
             return Err("Uso: /file <caminho> [pergunta]".to_string());
@@ -100,7 +108,9 @@ pub fn process_input_files(raw_input: &str) -> Result<(String, Vec<String>), Str
 
     for word in trimmed.split_whitespace() {
         if word.starts_with('@') && word.len() > 1 {
-            let possible_path = word.trim_start_matches('@').trim_matches(|c| c == ',' || c == '.' || c == ':' || c == ';');
+            let possible_path = word
+                .trim_start_matches('@')
+                .trim_matches(|c| c == ',' || c == '.' || c == ':' || c == ';');
             let test_path = expand_path(possible_path);
             if test_path.is_file() {
                 match read_file_content(possible_path) {

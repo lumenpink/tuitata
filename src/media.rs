@@ -78,7 +78,8 @@ pub fn save_generated_image(
     bytes: &[u8],
 ) -> Result<PathBuf, String> {
     let img_dir = vault_dir.join("01_inbox").join("imagens");
-    fs::create_dir_all(&img_dir).map_err(|e| format!("Erro ao criar diretório de imagens: {}", e))?;
+    fs::create_dir_all(&img_dir)
+        .map_err(|e| format!("Erro ao criar diretório de imagens: {}", e))?;
 
     let ext = match mime_type {
         "image/png" => "png",
@@ -89,7 +90,13 @@ pub fn save_generated_image(
     let slug: String = prompt
         .chars()
         .take(30)
-        .map(|c| if c.is_alphanumeric() { c.to_ascii_lowercase() } else { '_' })
+        .map(|c| {
+            if c.is_alphanumeric() {
+                c.to_ascii_lowercase()
+            } else {
+                '_'
+            }
+        })
         .collect();
     let slug = slug.trim_matches('_');
 
@@ -107,7 +114,5 @@ pub fn save_generated_image(
 }
 
 pub fn open_image_viewer(path: &Path) {
-    let _ = std::process::Command::new("nsxiv")
-        .arg(path)
-        .spawn();
+    let _ = std::process::Command::new("nsxiv").arg(path).spawn();
 }

@@ -25,20 +25,29 @@ pub fn render(f: &mut Frame, app: &App) {
 }
 
 fn render_header(f: &mut Frame, app: &App, area: Rect) {
-    let model_badge = if app.current_model == app.config.ollama_model || app.current_model.contains("qwen") || app.current_model.contains("ollama") {
+    let model_badge = if app.current_model == app.config.ollama_model
+        || app.current_model.contains("qwen")
+        || app.current_model.contains("ollama")
+    {
         Span::styled(
             format!(" [🦙 Ollama: {}] ", app.config.ollama_model),
-            Style::default().fg(Color::Rgb(100, 255, 100)).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(Color::Rgb(100, 255, 100))
+                .add_modifier(Modifier::BOLD),
         )
     } else if app.current_model.contains("pro") {
         Span::styled(
             " [🧠 Gemini Pro] ",
-            Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
         )
     } else {
         Span::styled(
             " [⚡ Gemini Flash] ",
-            Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+            Style::default()
+                .fg(Color::Cyan)
+                .add_modifier(Modifier::BOLD),
         )
     };
 
@@ -57,17 +66,30 @@ fn render_header(f: &mut Frame, app: &App, area: Rect) {
     f.render_widget(p, area);
 }
 
-fn highlight_line<'a>(prefix: &'a str, content: &'a str, base_style: Style, query: Option<&str>) -> Line<'a> {
+fn highlight_line<'a>(
+    prefix: &'a str,
+    content: &'a str,
+    base_style: Style,
+    query: Option<&str>,
+) -> Line<'a> {
     let q = match query {
         Some(s) if !s.is_empty() => s,
-        _ => return Line::from(vec![Span::styled(prefix, base_style), Span::styled(content, base_style)]),
+        _ => {
+            return Line::from(vec![
+                Span::styled(prefix, base_style),
+                Span::styled(content, base_style),
+            ])
+        }
     };
 
     let q_lower = q.to_lowercase();
     let content_lower = content.to_lowercase();
 
     if !content_lower.contains(&q_lower) {
-        return Line::from(vec![Span::styled(prefix, base_style), Span::styled(content, base_style)]);
+        return Line::from(vec![
+            Span::styled(prefix, base_style),
+            Span::styled(content, base_style),
+        ]);
     }
 
     let mut spans = Vec::new();
@@ -118,28 +140,47 @@ fn render_chat(f: &mut Frame, app: &App, area: Rect) {
     let mut lines = Vec::new();
 
     if app.messages.is_empty() {
-        lines.push(Line::from(vec![
-            Span::styled("✨ Tuitatá pronto. Digite sua pergunta abaixo e aperte Enter!", Style::default().fg(Color::DarkGray)),
-        ]));
+        lines.push(Line::from(vec![Span::styled(
+            "✨ Tuitatá pronto. Digite sua pergunta abaixo e aperte Enter!",
+            Style::default().fg(Color::DarkGray),
+        )]));
     }
 
     for msg in &app.messages {
         let is_user = msg.role == "user";
         let (prefix, color) = if is_user {
-            (format!("👤 Você ({})", msg.timestamp), Color::Rgb(0, 230, 255)) // Neon Cyan
+            (
+                format!("👤 Você ({})", msg.timestamp),
+                Color::Rgb(0, 230, 255),
+            ) // Neon Cyan
         } else {
-            (format!("🔥 Tuitatá ({})", msg.timestamp), Color::Rgb(255, 60, 140)) // Electric Pink
+            (
+                format!("🔥 Tuitatá ({})", msg.timestamp),
+                Color::Rgb(255, 60, 140),
+            ) // Electric Pink
         };
 
-        lines.push(Line::from(vec![
-            Span::styled(prefix, Style::default().fg(color).add_modifier(Modifier::BOLD)),
-        ]));
+        lines.push(Line::from(vec![Span::styled(
+            prefix,
+            Style::default().fg(color).add_modifier(Modifier::BOLD),
+        )]));
 
         if let Some(att) = &msg.attachment {
             lines.push(Line::from(vec![
-                Span::styled("  📎 [Imagem: ", Style::default().fg(Color::Rgb(150, 255, 150))),
-                Span::styled(&att.filename, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
-                Span::styled(format!(" ({})]", att.mime_type), Style::default().fg(Color::DarkGray)),
+                Span::styled(
+                    "  📎 [Imagem: ",
+                    Style::default().fg(Color::Rgb(150, 255, 150)),
+                ),
+                Span::styled(
+                    &att.filename,
+                    Style::default()
+                        .fg(Color::White)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    format!(" ({})]", att.mime_type),
+                    Style::default().fg(Color::DarkGray),
+                ),
             ]));
         }
 
@@ -148,9 +189,12 @@ fn render_chat(f: &mut Frame, app: &App, area: Rect) {
         for line_str in msg.content.lines() {
             if line_str.trim_start().starts_with("```") {
                 in_code_block = !in_code_block;
-                lines.push(Line::from(vec![
-                    Span::styled(format!("  {}", line_str), Style::default().fg(Color::Yellow).add_modifier(Modifier::DIM)),
-                ]));
+                lines.push(Line::from(vec![Span::styled(
+                    format!("  {}", line_str),
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .add_modifier(Modifier::DIM),
+                )]));
                 continue;
             }
 
@@ -224,7 +268,10 @@ fn render_input(f: &mut Frame, app: &App, area: Rect) {
     let inner_width = inner.width as usize;
 
     if app.input.is_empty() && !app.is_generating {
-        let display_text = Span::styled("Digite uma dúvida ou instrução para a IA...", Style::default().fg(Color::DarkGray));
+        let display_text = Span::styled(
+            "Digite uma dúvida ou instrução para a IA...",
+            Style::default().fg(Color::DarkGray),
+        );
         let p = Paragraph::new(display_text).block(block);
         f.render_widget(p, area);
         f.set_cursor_position((inner.x, inner.y));
@@ -265,14 +312,23 @@ fn render_input(f: &mut Frame, app: &App, area: Rect) {
 fn render_footer(f: &mut Frame, app: &App, area: Rect) {
     let status_line = if let Some((msg, instant)) = &app.status {
         if instant.elapsed().as_secs() < 5 {
-            Line::from(vec![
-                Span::styled(format!(" 📢 {}", msg), Style::default().fg(Color::Rgb(100, 255, 100)).add_modifier(Modifier::BOLD)),
-            ])
+            Line::from(vec![Span::styled(
+                format!(" 📢 {}", msg),
+                Style::default()
+                    .fg(Color::Rgb(100, 255, 100))
+                    .add_modifier(Modifier::BOLD),
+            )])
         } else {
-            Line::from(Span::styled(" Tuitatá v0.1.0 │ Padrão GOST / Baquara", Style::default().fg(Color::DarkGray)))
+            Line::from(Span::styled(
+                " Tuitatá v0.1.0 │ Padrão GOST / Baquara",
+                Style::default().fg(Color::DarkGray),
+            ))
         }
     } else {
-        Line::from(Span::styled(" Tuitatá v0.1.0 │ Padrão GOST / Baquara", Style::default().fg(Color::DarkGray)))
+        Line::from(Span::styled(
+            " Tuitatá v0.1.0 │ Padrão GOST / Baquara",
+            Style::default().fg(Color::DarkGray),
+        ))
     };
 
     let p = Paragraph::new(status_line);

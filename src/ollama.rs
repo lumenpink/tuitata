@@ -62,7 +62,11 @@ impl OllamaClient {
             };
 
             req_messages.push(OllamaMessage {
-                role: if m.role == "user" { "user" } else { "assistant" },
+                role: if m.role == "user" {
+                    "user"
+                } else {
+                    "assistant"
+                },
                 content: &m.content,
                 images,
             });
@@ -81,7 +85,12 @@ impl OllamaClient {
             .json(&payload)
             .send()
             .await
-            .map_err(|e| format!("Falha ao conectar com o Ollama em {}: {}. O serviço está ativo?", self.base_url, e))?;
+            .map_err(|e| {
+                format!(
+                    "Falha ao conectar com o Ollama em {}: {}. O serviço está ativo?",
+                    self.base_url, e
+                )
+            })?;
 
         if !resp.status().is_success() {
             let status = resp.status();
@@ -106,9 +115,7 @@ impl OllamaClient {
                 }
 
                 if let Ok(val) = serde_json::from_str::<Value>(&line) {
-                    if let Some(content) = val
-                        .pointer("/message/content")
-                        .and_then(|c| c.as_str())
+                    if let Some(content) = val.pointer("/message/content").and_then(|c| c.as_str())
                     {
                         let _ = tx.send(content.to_string());
                     }

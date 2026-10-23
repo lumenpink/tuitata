@@ -186,7 +186,10 @@ impl GeminiClient {
             return Err(format!("Erro ao gerar imagem ({status}): {err_text}"));
         }
 
-        let body: Value = resp.json().await.map_err(|e| format!("Erro ao processar JSON da imagem: {}", e))?;
+        let body: Value = resp
+            .json()
+            .await
+            .map_err(|e| format!("Erro ao processar JSON da imagem: {}", e))?;
 
         let parts = body
             .pointer("/candidates/0/content/parts")
