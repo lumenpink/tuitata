@@ -3,6 +3,11 @@
 Todas as modificações notáveis deste projeto serão documentadas neste arquivo.
 O formato é baseado no [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/) e este projeto segue [Semantic Versioning](https://semver.org/lang/pt-BR/).
 
+## [Unreleased]
+
+### Modificado
+- (build) otimizar tamanho de binario com profile.release e habilitar linking estatico musl crt-static (closes #2)
+
 ## [0.2.0-dev.1] - 2026-09-30
 
 ### Adicionado
