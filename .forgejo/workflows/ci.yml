@@ -17,7 +17,7 @@ jobs:
     name: "Rust — Tests & Checks"
     runs-on: ubuntu-latest
     container:
-      image: docker.io/lumenpink/gost-ci-cross:latest
+      image: gambi.2lp.in/lumen/gost-ci-cross:latest
     steps:
       - name: "Checkout"
         uses: https://github.com/actions/checkout@v4
@@ -39,7 +39,7 @@ jobs:
     needs: [test]
     if: success() && (github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')) && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     container:
-      image: docker.io/lumenpink/gost-ci-cross:latest
+      image: gambi.2lp.in/lumen/gost-ci-cross:latest
     steps:
       - name: "Checkout repository"
         uses: https://github.com/actions/checkout@v4
@@ -67,7 +67,7 @@ jobs:
       - name: "Configure Sovereign Lumen Cargo Registry"
         run: |
           mkdir -p "$HOME/.cargo"
-          printf '[registries.lumen]\nindex = "sparse+https://git.2lp.in/api/packages/lumen/cargo/"\n' > "$HOME/.cargo/config.toml"
+          printf '[registries.lumen]\nindex = "sparse+https://gambi.2lp.in/api/packages/lumen/cargo/"\n' > "$HOME/.cargo/config.toml"
 
       - name: "Compile Tuitatá Multiarch CLI Binaries"
         run: |
@@ -169,7 +169,7 @@ jobs:
           VERSION="${{ steps.meta.outputs.version }}"
 
           echo "★ Clonando repositório soberano da Banca para rotação e retenção..."
-          git clone --depth 1 "https://lumen:${GIT_2LP_TOKEN}@git.2lp.in/lumen/banca.git" /tmp/banca
+          git clone --depth 1 "https://lumen:${GIT_2LP_TOKEN}@gambi.2lp.in/lumen/banca.git" /tmp/banca
 
           if [ -d "/tmp/banca/site/downloads/tuitata" ] && [ -f "/tmp/banca/scripts/rotate-downloads.py" ]; then
             cd /tmp/banca
